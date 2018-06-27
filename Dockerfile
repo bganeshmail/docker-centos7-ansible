@@ -1,5 +1,6 @@
+#Forked from Jeff Geerling
 FROM centos:7
-LABEL maintainer="Jeff Geerling"
+LABEL maintainer="Ned Bellavance"
 ENV container=docker
 
 # Install systemd -- See https://hub.docker.com/_/centos/
@@ -18,10 +19,29 @@ RUN yum makecache fast \
  && yum -y install deltarpm epel-release initscripts \
  && yum -y update \
  && yum -y install \
+      python34 \
+      python34-pip \
       ansible \
       sudo \
       which \
+      unzip \
+      git \
  && yum clean all
+
+#Install Terraform 0.11.7
+RUN curl -O https://releases.hashicorp.com/terraform/0.11.7/terraform_0.11.7_linux_amd64.zip \
+ && unzip terraform_0.11.7_linux_amd64.zip -d /usr/bin/
+
+#Install OneView SDK
+RUN git clone https://github.com/HewlettPackard/python-hpOneView.git \
+ && cd python-hpOneView \
+ && python setup.py install \
+ && cd ..
+
+#Install the Ansible OneView module
+RUN git clone https://github.com/HewlettPackard/oneview-ansible.git
+
+ENV ANSIBLE_LIBRARY=/oneview-ansible/library ANSIBLE_MODULE_UTILS=/oneview-ansible/library/module_utils/
 
 # Disable requiretty.
 RUN sed -i -e 's/^\(Defaults\s*requiretty\)/#--- \1/'  /etc/sudoers
